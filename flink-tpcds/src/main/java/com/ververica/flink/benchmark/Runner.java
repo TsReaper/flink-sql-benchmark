@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class Runner {
@@ -49,20 +50,21 @@ class Runner {
 	}
 
 	void run(List<Tuple2<String, Long>> bestArray) {
-		List<Result> results = new ArrayList<>();
+		List<Result> resultsNormal = new ArrayList<>();
+		List<Result> resultsNinput = new ArrayList<>();
 		for (int i = 0; i < numIters; ++i) {
 			System.err.println(
 					String.format("--------------- Running %s %s/%s ---------------", name, (i + 1), numIters));
-			try {
-				results.add(runInternal());
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+			tEnv.getConfig().getConfiguration().setBoolean("table.optimizer.multiple-input-enabled", false);
+			resultsNormal.add(runInternal(name));
+			tEnv.getConfig().getConfiguration().setBoolean("table.optimizer.multiple-input-enabled", true);
+			resultsNinput.add(runInternal(name + "-n"));
 		}
-		printResults(results, bestArray);
+		printResults(name, resultsNormal, bestArray);
+		printResults(name + "-n", resultsNinput, bestArray);
 	}
 
-	private Result runInternal() throws Exception {
+	private Result runInternal(String name) {
 		// ensures garbage from previous cases don't impact this one
 		System.gc();
 
@@ -75,7 +77,13 @@ class Runner {
 
 		LOG.info(" begin execute.");
 
-		List<Row> res = Lists.newArrayList(table.execute().collect());
+		tEnv.getConfig().getConfiguration().setString("__job_name__", name);
+		List<Row> res = Collections.emptyList();
+		try {
+			res = Lists.newArrayList(table.execute().collect());
+		} catch (Throwable t) {
+			// ignore
+		}
 
 		LOG.info(" end execute");
 
@@ -89,9 +97,13 @@ class Runner {
 		return new Result(totalTime);
 	}
 
-	private void printResults(List<Result> results, List<Tuple2<String, Long>> bestArray) {
+	private void printResults(String name, List<Result> results, List<Tuple2<String, Long>> bestArray) {
 		int itemMaxLength = 20;
 		System.err.println();
+		for (Result result : results) {
+			System.err.println(result.totalTime);
+		}
+
 		Benchmark.printLine('-', "+", itemMaxLength, "", "", "", "");
 		Benchmark.printLine(' ', "|", itemMaxLength, " " + name, " Best Time(ms)", " Avg Time(ms)", " Max Time(ms)");
 		Benchmark.printLine('-', "+", itemMaxLength, "", "", "", "");
