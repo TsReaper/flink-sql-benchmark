@@ -56,6 +56,9 @@ public class Benchmark {
 	private static final Option ITERATIONS = new Option("i", "iterations", true,
 			"The number of iterations that will be run per case, default is 1.");
 
+	private static final Option ROUNDS = new Option("r", "rounds", true,
+			"The number of rounds that will be run, default is 1.");
+
 	private static final Option PARALLELISM = new Option("p", "parallelism", true,
 			"The parallelism, default is 800.");
 
@@ -72,18 +75,23 @@ public class Benchmark {
 				getQueries(
 						line.getOptionValue(LOCATION.getOpt()),
 						line.getOptionValue(QUERIES.getOpt())),
-				Integer.parseInt(line.getOptionValue(ITERATIONS.getOpt(), "1"))
+				Integer.parseInt(line.getOptionValue(ITERATIONS.getOpt(), "1")),
+				Integer.parseInt(line.getOptionValue(ROUNDS.getOpt(), "1"))
 		);
 	}
 
-	private static void run(TableEnvironment tEnv, LinkedHashMap<String, String> queries, int iterations) {
-		List<Tuple2<String, Long>> bestArray = new ArrayList<>();
-		queries.forEach((name, sql) -> {
-			System.out.println("Start run query: " + name);
-			Runner runner = new Runner(name, sql, iterations, tEnv);
-			runner.run(bestArray);
-		});
-		printSummary(bestArray);
+	private static void run(TableEnvironment tEnv, LinkedHashMap<String, String> queries, int iterations, int rounds) {
+		System.err.println("Total rounds: " + rounds);
+		for (int r = 0; r < rounds; r++) {
+			System.err.println("Round " + (r + 1) + " starts.");
+			List<Tuple2<String, Long>> bestArray = new ArrayList<>();
+			queries.forEach((name, sql) -> {
+				System.out.println("Start run query: " + name);
+				Runner runner = new Runner(name, sql, iterations, tEnv);
+				runner.run(bestArray);
+			});
+			printSummary(bestArray);
+		}
 	}
 
 	private static void printSummary(List<Tuple2<String, Long>> bestArray) {
@@ -161,6 +169,7 @@ public class Benchmark {
 		options.addOption(LOCATION);
 		options.addOption(QUERIES);
 		options.addOption(ITERATIONS);
+		options.addOption(ROUNDS);
 		options.addOption(PARALLELISM);
 		return options;
 	}

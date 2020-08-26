@@ -55,13 +55,13 @@ class Runner {
 		for (int i = 0; i < numIters; ++i) {
 			System.err.println(
 					String.format("--------------- Running %s %s/%s ---------------", name, (i + 1), numIters));
-			tEnv.getConfig().getConfiguration().setBoolean("table.optimizer.multiple-input-enabled", false);
+			// tEnv.getConfig().getConfiguration().setBoolean("table.optimizer.multiple-input-enabled", false);
 			resultsNormal.add(runInternal(name));
-			tEnv.getConfig().getConfiguration().setBoolean("table.optimizer.multiple-input-enabled", true);
-			resultsNinput.add(runInternal(name + "-n"));
+			// tEnv.getConfig().getConfiguration().setBoolean("table.optimizer.multiple-input-enabled", true);
+			// resultsNinput.add(runInternal(name + "-n"));
 		}
 		printResults(name, resultsNormal, bestArray);
-		printResults(name + "-n", resultsNinput, bestArray);
+		// printResults(name + "-n", resultsNinput, bestArray);
 	}
 
 	private Result runInternal(String name) {
@@ -71,7 +71,9 @@ class Runner {
 		LOG.info("begin register tables.");
 
 		long startTime = System.currentTimeMillis();
+		long totalTime;
 		LOG.info(" begin optimize.");
+		System.err.println("Query " + name + " starts at " + java.time.LocalDateTime.now());
 
 		Table table = tEnv.sqlQuery(sqlQuery);
 
@@ -81,16 +83,21 @@ class Runner {
 		List<Row> res = Collections.emptyList();
 		try {
 			res = Lists.newArrayList(table.execute().collect());
+			totalTime = System.currentTimeMillis() - startTime;
 		} catch (Throwable t) {
-			// ignore
+			StringBuilder sb = new StringBuilder();
+			for (StackTraceElement ste : t.getStackTrace()) {
+				sb.append(ste.toString()).append("\n");
+			}
+			System.err.println(sb.toString());
+			totalTime = 999999999L;
 		}
 
 		LOG.info(" end execute");
 
 		System.out.println();
-
-		long totalTime = System.currentTimeMillis() - startTime;
 		System.out.println("total execute " + totalTime + "ms.");
+		System.err.println("Query " + name + " ends at " + java.time.LocalDateTime.now());
 
 		printRow(res);
 
