@@ -145,8 +145,6 @@ public class Benchmark {
 
 		tEnv.getConfig().getConfiguration().setBoolean(
 				OptimizerConfigOptions.TABLE_OPTIMIZER_JOIN_REORDER_ENABLED, true);
-		tEnv.getConfig().getConfiguration().setBoolean(
-				OptimizerConfigOptions.TABLE_OPTIMIZER_REUSE_SOURCE_ENABLED, false);
 		tEnv.getConfig().getConfiguration().setLong(
 				OptimizerConfigOptions.TABLE_OPTIMIZER_BROADCAST_JOIN_THRESHOLD, 10485760L);
 		tEnv.getConfig().getConfiguration().setInteger(

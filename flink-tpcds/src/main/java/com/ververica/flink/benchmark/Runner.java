@@ -85,11 +85,7 @@ class Runner {
 			res = Lists.newArrayList(table.execute().collect());
 			totalTime = System.currentTimeMillis() - startTime;
 		} catch (Throwable t) {
-			StringBuilder sb = new StringBuilder();
-			for (StackTraceElement ste : t.getStackTrace()) {
-				sb.append(ste.toString()).append("\n");
-			}
-			System.err.println(sb.toString());
+			t.printStackTrace();
 			totalTime = 999999999L;
 		}
 
